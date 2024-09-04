@@ -5,4 +5,4 @@ FROM debian:trixie
 ARG BUILD_TIMESTAMP
 
 COPY . .
-RUN bash ./build.sh
+RUN ./build.sh

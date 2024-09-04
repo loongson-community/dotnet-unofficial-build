@@ -16,6 +16,9 @@ PACKAGES=(
 
     liblttng-ust-dev
     zlib1g-dev
+
+    # for dotnet-unofficial-build self use (pulling back the rootfs image)
+    docker.io
 )
 
 apt-get update
