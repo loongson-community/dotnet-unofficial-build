@@ -69,6 +69,13 @@ provision_loong_rootfs() {
 
     group "provisioning $platform cross rootfs"
 
+    if [[ -e "$destdir/.provisioned" ]]; then
+        # TODO: check against the build info
+        echo "found existing rootfs, skipping provision"
+        endgroup
+        return
+    fi
+
     docker pull --platform="$platform" "$tag"
     container_id="$(docker create --platform="$platform" "$tag" /bin/true)"
     echo "temp container ID is $(_term green)${container_id}$(_term reset)"
@@ -76,6 +83,7 @@ provision_loong_rootfs() {
     mkdir -p "$destdir" || true
     pushd "$destdir" > /dev/null
     docker export "$container_id" | tar -xf -
+    touch .provisioned
     popd
 
     docker rm "$container_id"
