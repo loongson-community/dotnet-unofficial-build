@@ -112,10 +112,78 @@ prepare_sources() {
     endgroup
 }
 
+build_runtime() {
+    local runtime_root="$1"
+    local target_arch="loongarch64"
+    local target_rid="linux-$target_arch"
+    local build_configuration=Release
+
+    group "building runtime"
+    pushd "$runtime_root" > /dev/null
+    ./build.sh clr+libs+packs --ci -c "$build_configuration" --cross --arch "$target_arch"
+    popd > /dev/null
+    endgroup
+}
+
+organize_runtime_artifacts() {
+    local runtime_root="$1"
+    local target_arch="loongarch64"
+    local target_rid="linux-$target_arch"
+    local build_configuration=Release
+
+    group "organizing runtime artifacts"
+    pushd "$runtime_root/artifacts/packages/$build_configuration/Shipping" > /dev/null
+
+    local packages_dir_sources=(
+        Microsoft.NETCore.App.Host."$target_rid".*.nupkg
+        Microsoft.NETCore.App.Runtime."$target_rid".*.nupkg
+    )
+
+    local out_dir_sources=(
+        dotnet-runtime-*-"$target_rid".tar.gz
+        Microsoft.DotNet.ILCompiler.*.nupkg
+        Microsoft.NETCore.App.Crossgen2."$target_rid".*.nupkg
+        Microsoft.NETCore.App.Host."$target_rid".*.nupkg
+        Microsoft.NETCore.App.Ref.*.nupkg
+        Microsoft.NETCore.App.Runtime."$target_rid".*.nupkg
+        Microsoft.NETCore.ILAsm.*.nupkg
+        Microsoft.NETCore.ILDAsm.*.nupkg
+        runtime."$target_rid".Microsoft.DotNet.ILCompiler.*.nupkg
+        runtime."$target_rid".Microsoft.NETCore.ILAsm.*.nupkg
+        runtime."$target_rid".Microsoft.NETCore.ILDAsm.*.nupkg
+
+        # not produced for loongarch64 or net9:
+        # (either may be the reason but I don't know)
+        #
+        #runtime."$target_rid".Microsoft.NETCore.DotNetHost.*.nupkg
+        #runtime."$target_rid".Microsoft.NETCore.DotNetHostPolicy.*.nupkg
+        #runtime."$target_rid".Microsoft.NETCore.DotNetHostResolver.*.nupkg
+    )
+
+    local download_runtime_dir_sources=(
+        dotnet-runtime-*-"$target_rid".tar.gz
+    )
+
+    local download_runtime_dir="${DOWNLOADS_DIR}/Runtime/${DOTNET_RUNTIME_BRANCH}"
+
+    mkdir -p "$download_runtime_dir"
+    mkdir -p "$OUT_DIR"
+    mkdir -p "$PACKAGES_DIR"
+
+    cp -v "${packages_dir_sources[@]}" "$PACKAGES_DIR"
+    cp -v "${download_runtime_dir_sources[@]}" "$download_runtime_dir"
+    cp -v "${out_dir_sources[@]}" "$OUT_DIR"
+
+    popd > /dev/null
+    endgroup
+}
+
 main() {
     dump_config
     provision_loong_rootfs "$ROOTFS_IMAGE_TAG" "$ROOTFS_DIR"
     prepare_sources
+    build_runtime "$DOTNET_RUNTIME_CHECKOUT"
+    organize_runtime_artifacts "$DOTNET_RUNTIME_CHECKOUT"
 }
 
 main
