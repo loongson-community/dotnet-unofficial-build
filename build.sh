@@ -19,6 +19,7 @@ echo
 : "${ROOTFS_DIR:?ROOTFS_DIR must be set}"
 : "${ROOTFS_IMAGE_TAG:?ROOTFS_IMAGE_TAG must be set}"
 
+: "${DOTNET_REQUESTED_VERSION:?DOTNET_REQUESTED_VERSION must be set}"
 : "${DOTNET_RUNTIME_BRANCH:?DOTNET_RUNTIME_BRANCH must be set}"
 : "${DOTNET_RUNTIME_REPO:=https://github.com/dotnet/runtime.git}"
 : "${DOTNET_SDK_BRANCH:?DOTNET_SDK_BRANCH must be set}"
@@ -45,6 +46,7 @@ dump_config() {
     echo_kv PACKAGES_DIR "$PACKAGES_DIR"
     echo_kv ROOTFS_DIR "$ROOTFS_DIR"
     echo_kv ROOTFS_IMAGE_TAG "$ROOTFS_IMAGE_TAG"
+    echo_kv DOTNET_REQUESTED_VERSION "$DOTNET_REQUESTED_VERSION"
     endgroup
 
     group "source versions"
@@ -164,7 +166,7 @@ organize_runtime_artifacts() {
         dotnet-runtime-*-"$target_rid".tar.gz
     )
 
-    local download_runtime_dir="${DOWNLOADS_DIR}/Runtime/${DOTNET_RUNTIME_BRANCH}"
+    local download_runtime_dir="${DOWNLOADS_DIR}/Runtime/${DOTNET_REQUESTED_VERSION}"
 
     mkdir -p "$download_runtime_dir"
     mkdir -p "$OUT_DIR"
@@ -178,12 +180,38 @@ organize_runtime_artifacts() {
     endgroup
 }
 
+build_sdk() {
+    local sdk_root="$1"
+    local target_arch="loongarch64"
+    local build_configuration=Release
+
+    group "building sdk"
+    pushd "$sdk_root" > /dev/null
+
+    sed -i s"|<clear />|<clear />\n<add key=\"local\" value=\"${PACKAGES_DIR}\" />|" NuGet.config
+
+    local args=(
+        --pack
+        --ci
+        -c "$build_configuration"
+        /p:Architecture="$target_arch"
+        /p:HostRid=linux-x64
+        /p:PublicBaseURL="file://${DOWNLOADS_DIR}/"
+    )
+
+    # TODO: aspnetcore
+    ./build.sh "${args[@]}"
+    popd > /dev/null
+    endgroup
+}
+
 main() {
     dump_config
     provision_loong_rootfs "$ROOTFS_IMAGE_TAG" "$ROOTFS_DIR"
     prepare_sources
     build_runtime "$DOTNET_RUNTIME_CHECKOUT"
     organize_runtime_artifacts "$DOTNET_RUNTIME_CHECKOUT"
+    build_sdk "$DOTNET_SDK_CHECKOUT"
 }
 
 main
