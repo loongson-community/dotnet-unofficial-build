@@ -14,6 +14,11 @@ PACKAGES=(
     python3-libxml2
     wget
 
+    # llvm/clang utils
+    clang-18
+    lld-18
+    llvm-18
+
     liblttng-ust-dev
     zlib1g-dev
 
