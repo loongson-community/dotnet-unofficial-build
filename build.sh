@@ -19,11 +19,22 @@ echo
 : "${ROOTFS_DIR:?ROOTFS_DIR must be set}"
 : "${ROOTFS_IMAGE_TAG:?ROOTFS_IMAGE_TAG must be set}"
 
-: "${DOTNET_REQUESTED_VERSION:?DOTNET_REQUESTED_VERSION must be set}"
+: "${DOTNET_ASPNETCORE_REQUESTED_VERSION:?DOTNET_ASPNETCORE_REQUESTED_VERSION must be set}"
+: "${DOTNET_RUNTIME_REQUESTED_VERSION:?DOTNET_RUNTIME_REQUESTED_VERSION must be set}"
+
+: "${DOTNET_ASPNETCORE_BRANCH:?DOTNET_ASPNETCORE_BRANCH must be set}"
+: "${DOTNET_ASPNETCORE_REPO:=https://github.com/dotnet/aspnetcore.git}"
 : "${DOTNET_RUNTIME_BRANCH:?DOTNET_RUNTIME_BRANCH must be set}"
 : "${DOTNET_RUNTIME_REPO:=https://github.com/dotnet/runtime.git}"
 : "${DOTNET_SDK_BRANCH:?DOTNET_SDK_BRANCH must be set}"
 : "${DOTNET_SDK_REPO:=https://github.com/dotnet/sdk.git}"
+
+if [[ -n $DOTNET_ASPNETCORE_CHECKOUT ]]; then
+    DOTNET_ASPNETCORE_CHECKED_OUT=true
+else
+    DOTNET_ASPNETCORE_CHECKED_OUT=false
+    : "${DOTNET_ASPNETCORE_CHECKOUT:=/tmp/dotnet-aspnetcore}"
+fi
 
 if [[ -n $DOTNET_RUNTIME_CHECKOUT ]]; then
     DOTNET_RUNTIME_CHECKED_OUT=true
@@ -50,6 +61,12 @@ dump_config() {
     endgroup
 
     group "source versions"
+    echo "$(_term bold yellow)dotnet/aspnetcore:$(_term reset)"
+    echo_kv "  repo" "$DOTNET_ASPNETCORE_REPO"
+    echo_kv "  branch" "$DOTNET_ASPNETCORE_BRANCH"
+    echo_kv "  checkout" "$DOTNET_ASPNETCORE_CHECKOUT"
+    echo
+
     echo "$(_term bold yellow)dotnet/runtime:$(_term reset)"
     echo_kv "  repo" "$DOTNET_RUNTIME_REPO"
     echo_kv "  branch" "$DOTNET_RUNTIME_BRANCH"
@@ -104,11 +121,14 @@ _do_checkout() {
         return
     fi
 
-    git clone --depth 1 -b "$branch" "$repo" "$dest"
+    # aspnetcore needs submodules, but it's harmless to just unconditionally
+    # add --recurse-submodules here
+    git clone --depth 1 -b "$branch" --recurse-submodules "$repo" "$dest"
 }
 
 prepare_sources() {
     group "preparing sources"
+    _do_checkout "$DOTNET_ASPNETCORE_REPO" "$DOTNET_ASPNETCORE_BRANCH" "$DOTNET_ASPNETCORE_CHECKOUT" "$DOTNET_ASPNETCORE_CHECKED_OUT"
     _do_checkout "$DOTNET_RUNTIME_REPO" "$DOTNET_RUNTIME_BRANCH" "$DOTNET_RUNTIME_CHECKOUT" "$DOTNET_RUNTIME_CHECKED_OUT"
     _do_checkout "$DOTNET_SDK_REPO" "$DOTNET_SDK_BRANCH" "$DOTNET_SDK_CHECKOUT" "$DOTNET_SDK_CHECKED_OUT"
     endgroup
@@ -166,15 +186,79 @@ organize_runtime_artifacts() {
         dotnet-runtime-*-"$target_rid".tar.gz
     )
 
-    local download_runtime_dir="${DOWNLOADS_DIR}/Runtime/${DOTNET_REQUESTED_VERSION}"
+    local download_runtime_dir="${DOWNLOADS_DIR}/Runtime/${DOTNET_RUNTIME_REQUESTED_VERSION}"
+    local download_runtime_dest="dotnet-runtime-${DOTNET_RUNTIME_REQUESTED_VERSION}-${target_rid}.tar.gz"
 
     mkdir -p "$download_runtime_dir"
     mkdir -p "$OUT_DIR"
     mkdir -p "$PACKAGES_DIR"
 
     cp -v "${packages_dir_sources[@]}" "$PACKAGES_DIR"
-    cp -v "${download_runtime_dir_sources[@]}" "$download_runtime_dir"
+    cp -v "${download_runtime_dir_sources[@]}" "$download_runtime_dir/$download_runtime_dest"
     cp -v "${out_dir_sources[@]}" "$OUT_DIR"
+
+    popd > /dev/null
+    endgroup
+}
+
+build_aspnetcore() {
+    local aspnetcore_root="$1"
+    local target_arch="loongarch64"
+    local target_rid="linux-$target_arch"
+    local build_configuration=Release
+
+    group "building aspnetcore"
+    pushd "$aspnetcore_root" > /dev/null
+
+    sed -i "s|\$(BaseIntermediateOutputPath)\$(DotNetRuntimeArchiveFileName)|${DOWNLOADS_DIR}/Runtime/${DOTNET_RUNTIME_REQUESTED_VERSION}/dotnet-runtime-${DOTNET_RUNTIME_REQUESTED_VERSION}-${target_rid}.tar.gz|" src/Framework/App.Runtime/src/Microsoft.AspNetCore.App.Runtime.csproj
+
+    local args=(
+        --pack
+        # --ci
+        -c "$build_configuration"
+        --arch "$target_arch"
+        --no-test
+        /p:DotNetAssetRootUrl="file://${DOWNLOADS_DIR}/"
+    )
+
+    ./eng/build.sh "${args[@]}"
+    popd > /dev/null
+    endgroup
+}
+
+organize_aspnetcore_artifacts() {
+    local aspnetcore_root="$1"
+    local target_arch="loongarch64"
+    local target_rid="linux-$target_arch"
+    local build_configuration=Release
+
+    group "organizing aspnetcore artifacts"
+    pushd "$aspnetcore_root/artifacts" > /dev/null
+
+    local pkg="packages/$build_configuration/Shipping"
+    local ins="installers/$build_configuration"
+    local packages_dir_sources=(
+        "$pkg"/Microsoft.AspNetCore.App.Runtime."$target_rid".*.nupkg
+    )
+
+    local out_dir_sources=(
+        "$ins"/*
+        "$pkg"/Microsoft.AspNetCore.App.Runtime."$target_rid".*.nupkg
+        "$pkg"/Microsoft.DotNet.Web.*.nupkg
+    )
+
+    local download_aspnetcore_dir="${DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_ASPNETCORE_REQUESTED_VERSION}"
+
+    mkdir -p "$download_aspnetcore_dir"
+    mkdir -p "$OUT_DIR"
+    mkdir -p "$PACKAGES_DIR"
+
+    cp -v "${packages_dir_sources[@]}" "$PACKAGES_DIR"
+    cp -v "${out_dir_sources[@]}" "$OUT_DIR"
+
+    cp -v "$ins"/aspnetcore_base_runtime.version "$download_aspnetcore_dir/"
+    cp -v "$ins"/aspnetcore-runtime-*-"$target_rid".tar.gz "$download_aspnetcore_dir/aspnetcore-runtime-${DOTNET_ASPNETCORE_REQUESTED_VERSION}-${target_rid}.tar.gz"
+    cp -v "$ins"/aspnetcore-targeting-pack-*-"$target_rid".tar.gz "$download_aspnetcore_dir/aspnetcore-targeting-pack-${DOTNET_ASPNETCORE_REQUESTED_VERSION}-${target_rid}.tar.gz"
 
     popd > /dev/null
     endgroup
@@ -183,6 +267,7 @@ organize_runtime_artifacts() {
 build_sdk() {
     local sdk_root="$1"
     local target_arch="loongarch64"
+    local target_rid="linux-$target_arch"
     local build_configuration=Release
 
     group "building sdk"
@@ -211,6 +296,8 @@ main() {
     prepare_sources
     build_runtime "$DOTNET_RUNTIME_CHECKOUT"
     organize_runtime_artifacts "$DOTNET_RUNTIME_CHECKOUT"
+    build_aspnetcore "$DOTNET_ASPNETCORE_CHECKOUT"
+    organize_aspnetcore_artifacts "$DOTNET_ASPNETCORE_CHECKOUT"
     build_sdk "$DOTNET_SDK_CHECKOUT"
 }
 
