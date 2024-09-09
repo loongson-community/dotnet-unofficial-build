@@ -57,7 +57,6 @@ dump_config() {
     echo_kv PACKAGES_DIR "$PACKAGES_DIR"
     echo_kv ROOTFS_DIR "$ROOTFS_DIR"
     echo_kv ROOTFS_IMAGE_TAG "$ROOTFS_IMAGE_TAG"
-    echo_kv DOTNET_REQUESTED_VERSION "$DOTNET_REQUESTED_VERSION"
     endgroup
 
     group "source versions"
@@ -77,6 +76,11 @@ dump_config() {
     echo_kv "  repo" "$DOTNET_SDK_REPO"
     echo_kv "  branch" "$DOTNET_SDK_BRANCH"
     echo_kv "  checkout" "$DOTNET_SDK_CHECKOUT"
+    endgroup
+
+    group "masquerade versions"
+    echo_kv "aspnetcore" "$DOTNET_ASPNETCORE_REQUESTED_VERSION"
+    echo_kv "   runtime" "$DOTNET_RUNTIME_REQUESTED_VERSION"
     endgroup
 }
 
