@@ -50,8 +50,16 @@ else
     : "${DOTNET_SDK_CHECKOUT:=/tmp/dotnet-sdk}"
 fi
 
+: "${TARGET_ARCH:=loongarch64}"
+: "${TARGET_RID:=linux-$TARGET_ARCH}"
+: "${BUILD_CFG:=Release}"
+
 dump_config() {
     group "build config dump"
+    echo_kv TARGET_ARCH "$TARGET_ARCH"
+    echo_kv TARGET_RID "$TARGET_RID"
+    echo_kv BUILD_CFG "$BUILD_CFG"
+    echo
     echo_kv DOWNLOADS_DIR "$DOWNLOADS_DIR"
     echo_kv OUT_DIR "$OUT_DIR"
     echo_kv PACKAGES_DIR "$PACKAGES_DIR"
@@ -140,13 +148,10 @@ prepare_sources() {
 
 build_runtime() {
     local runtime_root="$1"
-    local target_arch="loongarch64"
-    local target_rid="linux-$target_arch"
-    local build_configuration=Release
 
     group "building runtime"
     pushd "$runtime_root" > /dev/null
-    ./build.sh clr+libs+host+packs -c "$build_configuration" --cross --arch "$target_arch"
+    ./build.sh clr+libs+host+packs -c "$BUILD_CFG" --cross --arch "$TARGET_ARCH"
     popd > /dev/null
     endgroup
 }
@@ -184,41 +189,38 @@ _cp_into_with_masquerade() {
 
 organize_runtime_artifacts() {
     local runtime_root="$1"
-    local target_arch="loongarch64"
-    local target_rid="linux-$target_arch"
-    local build_configuration=Release
 
     group "organizing runtime artifacts"
-    pushd "$runtime_root/artifacts/packages/$build_configuration/Shipping" > /dev/null
+    pushd "$runtime_root/artifacts/packages/$BUILD_CFG/Shipping" > /dev/null
 
     local packages_dir_sources=(
-        Microsoft.NETCore.App.Host."$target_rid".*.nupkg
-        Microsoft.NETCore.App.Runtime."$target_rid".*.nupkg
+        Microsoft.NETCore.App.Host."$TARGET_RID".*.nupkg
+        Microsoft.NETCore.App.Runtime."$TARGET_RID".*.nupkg
     )
 
     local out_dir_sources=(
-        dotnet-runtime-*-"$target_rid".tar.gz
+        dotnet-runtime-*-"$TARGET_RID".tar.gz
         Microsoft.DotNet.ILCompiler.*.nupkg
-        Microsoft.NETCore.App.Crossgen2."$target_rid".*.nupkg
-        Microsoft.NETCore.App.Host."$target_rid".*.nupkg
+        Microsoft.NETCore.App.Crossgen2."$TARGET_RID".*.nupkg
+        Microsoft.NETCore.App.Host."$TARGET_RID".*.nupkg
         Microsoft.NETCore.App.Ref.*.nupkg
-        Microsoft.NETCore.App.Runtime."$target_rid".*.nupkg
+        Microsoft.NETCore.App.Runtime."$TARGET_RID".*.nupkg
         Microsoft.NETCore.ILAsm.*.nupkg
         Microsoft.NETCore.ILDAsm.*.nupkg
-        runtime."$target_rid".Microsoft.DotNet.ILCompiler.*.nupkg
-        runtime."$target_rid".Microsoft.NETCore.ILAsm.*.nupkg
-        runtime."$target_rid".Microsoft.NETCore.ILDAsm.*.nupkg
+        runtime."$TARGET_RID".Microsoft.DotNet.ILCompiler.*.nupkg
+        runtime."$TARGET_RID".Microsoft.NETCore.ILAsm.*.nupkg
+        runtime."$TARGET_RID".Microsoft.NETCore.ILDAsm.*.nupkg
 
         # not produced for loongarch64 or net9:
         # (either may be the reason but I don't know)
         #
-        #runtime."$target_rid".Microsoft.NETCore.DotNetHost.*.nupkg
-        #runtime."$target_rid".Microsoft.NETCore.DotNetHostPolicy.*.nupkg
-        #runtime."$target_rid".Microsoft.NETCore.DotNetHostResolver.*.nupkg
+        #runtime."$TARGET_RID".Microsoft.NETCore.DotNetHost.*.nupkg
+        #runtime."$TARGET_RID".Microsoft.NETCore.DotNetHostPolicy.*.nupkg
+        #runtime."$TARGET_RID".Microsoft.NETCore.DotNetHostResolver.*.nupkg
     )
 
     local download_runtime_dir_sources=(
-        dotnet-runtime-*-"$target_rid".tar.gz
+        dotnet-runtime-*-"$TARGET_RID".tar.gz
     )
 
     local download_runtime_dir="${DOWNLOADS_DIR}/Runtime/${DOTNET_RUNTIME_REQUESTED_VERSION}"
@@ -237,19 +239,16 @@ organize_runtime_artifacts() {
 
 build_aspnetcore() {
     local aspnetcore_root="$1"
-    local target_arch="loongarch64"
-    local target_rid="linux-$target_arch"
-    local build_configuration=Release
 
     group "building aspnetcore"
     pushd "$aspnetcore_root" > /dev/null
 
-    sed -i "s|\$(BaseIntermediateOutputPath)\$(DotNetRuntimeArchiveFileName)|${DOWNLOADS_DIR}/Runtime/${DOTNET_RUNTIME_REQUESTED_VERSION}/dotnet-runtime-${DOTNET_RUNTIME_REQUESTED_VERSION}-${target_rid}.tar.gz|" src/Framework/App.Runtime/src/Microsoft.AspNetCore.App.Runtime.csproj
+    sed -i "s|\$(BaseIntermediateOutputPath)\$(DotNetRuntimeArchiveFileName)|${DOWNLOADS_DIR}/Runtime/${DOTNET_RUNTIME_REQUESTED_VERSION}/dotnet-runtime-${DOTNET_RUNTIME_REQUESTED_VERSION}-${TARGET_RID}.tar.gz|" src/Framework/App.Runtime/src/Microsoft.AspNetCore.App.Runtime.csproj
 
     local args=(
         --pack
-        -c "$build_configuration"
-        --arch "$target_arch"
+        -c "$BUILD_CFG"
+        --arch "$TARGET_ARCH"
         --no-build-nodejs
         --no-test
         /p:DotNetAssetRootUrl="file://${DOWNLOADS_DIR}/"
@@ -262,30 +261,27 @@ build_aspnetcore() {
 
 organize_aspnetcore_artifacts() {
     local aspnetcore_root="$1"
-    local target_arch="loongarch64"
-    local target_rid="linux-$target_arch"
-    local build_configuration=Release
 
     group "organizing aspnetcore artifacts"
     pushd "$aspnetcore_root/artifacts" > /dev/null
 
-    local pkg="packages/$build_configuration/Shipping"
-    local ins="installers/$build_configuration"
+    local pkg="packages/$BUILD_CFG/Shipping"
+    local ins="installers/$BUILD_CFG"
     local packages_dir_sources=(
         "$pkg"/Microsoft.AspNetCore.App.Ref.*.nupkg
-        "$pkg"/Microsoft.AspNetCore.App.Runtime."$target_rid".*.nupkg
+        "$pkg"/Microsoft.AspNetCore.App.Runtime."$TARGET_RID".*.nupkg
     )
 
     local out_dir_sources=(
         "$ins"/*
         "$pkg"/Microsoft.AspNetCore.App.Ref.*.nupkg
-        "$pkg"/Microsoft.AspNetCore.App.Runtime."$target_rid".*.nupkg
+        "$pkg"/Microsoft.AspNetCore.App.Runtime."$TARGET_RID".*.nupkg
         "$pkg"/Microsoft.DotNet.Web.*.nupkg
     )
 
     local download_dir_sources=(
-        "$ins"/aspnetcore-runtime-*-"$target_rid".tar.gz
-        "$ins"/aspnetcore-targeting-pack-*-"$target_rid".tar.gz
+        "$ins"/aspnetcore-runtime-*-"$TARGET_RID".tar.gz
+        "$ins"/aspnetcore-targeting-pack-*-"$TARGET_RID".tar.gz
     )
 
     local download_aspnetcore_dir="${DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_ASPNETCORE_REQUESTED_VERSION}"
@@ -305,9 +301,6 @@ organize_aspnetcore_artifacts() {
 
 build_sdk() {
     local sdk_root="$1"
-    local target_arch="loongarch64"
-    local target_rid="linux-$target_arch"
-    local build_configuration=Release
 
     group "building sdk"
     pushd "$sdk_root" > /dev/null
@@ -316,8 +309,8 @@ build_sdk() {
 
     local args=(
         --pack
-        -c "$build_configuration"
-        /p:Architecture="$target_arch"
+        -c "$BUILD_CFG"
+        /p:Architecture="$TARGET_ARCH"
         /p:HostRid=linux-x64
         /p:PublicBaseURL="file://${DOWNLOADS_DIR}/"
     )
@@ -329,15 +322,12 @@ build_sdk() {
 
 organize_sdk_artifacts() {
     local sdk_root="$1"
-    local target_arch="loongarch64"
-    local target_rid="linux-$target_arch"
-    local build_configuration=Release
 
     group "organizing sdk artifacts"
-    pushd "$sdk_root/artifacts/packages/$build_configuration/Shipping" > /dev/null
+    pushd "$sdk_root/artifacts/packages/$BUILD_CFG/Shipping" > /dev/null
 
     local out_dir_sources=(
-        dotnet-sdk-*-"${target_rid}".tar.*
+        dotnet-sdk-*-"${TARGET_RID}".tar.*
     )
 
     mkdir -p "$OUT_DIR"
