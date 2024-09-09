@@ -146,9 +146,40 @@ build_runtime() {
 
     group "building runtime"
     pushd "$runtime_root" > /dev/null
-    ./build.sh clr+libs+packs -c "$build_configuration" --cross --arch "$target_arch"
+    ./build.sh clr+libs+host+packs -c "$build_configuration" --cross --arch "$target_arch"
     popd > /dev/null
     endgroup
+}
+
+# usage: _masquerade_dev_version filename target_ver
+#
+# e.g.
+#
+# _masquerade_dev_version \
+#     Microsoft.NETCore.App.Host.linux-loongarch64.9.0.0-dev.nupkg \
+#     9.0.0-rc.1.24414.5
+#
+# output: Microsoft.NETCore.App.Host.linux-loongarch64.9.0.0-rc.1.24414.5.nupkg
+_masquerade_dev_version() {
+    local filename="$1"
+    local target_ver="$2"
+
+    echo "$filename" | sed -E "s/[0-9]+\.0\.0-dev/$2/"
+}
+
+# usage: _cp_with_masquerade destdir masquerade_ver source_files...
+_cp_into_with_masquerade() {
+    local destdir="$1"
+    local masquerade_ver="$2"
+    shift
+    shift
+
+    local masqueraded_filename
+    for f in "$@"; do
+        masqueraded_filename="$(basename "$(_masquerade_dev_version "$f" "$masquerade_ver")")"
+        cp -v "$f" "$destdir"
+        cp -v "$f" "$destdir/$masqueraded_filename"
+    done
 }
 
 organize_runtime_artifacts() {
@@ -191,15 +222,14 @@ organize_runtime_artifacts() {
     )
 
     local download_runtime_dir="${DOWNLOADS_DIR}/Runtime/${DOTNET_RUNTIME_REQUESTED_VERSION}"
-    local download_runtime_dest="dotnet-runtime-${DOTNET_RUNTIME_REQUESTED_VERSION}-${target_rid}.tar.gz"
 
     mkdir -p "$download_runtime_dir"
     mkdir -p "$OUT_DIR"
     mkdir -p "$PACKAGES_DIR"
 
-    cp -v "${packages_dir_sources[@]}" "$PACKAGES_DIR"
-    cp -v "${download_runtime_dir_sources[@]}" "$download_runtime_dir/$download_runtime_dest"
-    cp -v "${out_dir_sources[@]}" "$OUT_DIR"
+    _cp_into_with_masquerade "$PACKAGES_DIR" "$DOTNET_RUNTIME_REQUESTED_VERSION" "${packages_dir_sources[@]}"
+    _cp_into_with_masquerade "$download_runtime_dir" "$DOTNET_RUNTIME_REQUESTED_VERSION" "${download_runtime_dir_sources[@]}"
+    _cp_into_with_masquerade "$OUT_DIR" "$DOTNET_RUNTIME_REQUESTED_VERSION" "${out_dir_sources[@]}"
 
     popd > /dev/null
     endgroup
@@ -220,6 +250,7 @@ build_aspnetcore() {
         --pack
         -c "$build_configuration"
         --arch "$target_arch"
+        --no-build-nodejs
         --no-test
         /p:DotNetAssetRootUrl="file://${DOWNLOADS_DIR}/"
     )
@@ -241,13 +272,20 @@ organize_aspnetcore_artifacts() {
     local pkg="packages/$build_configuration/Shipping"
     local ins="installers/$build_configuration"
     local packages_dir_sources=(
+        "$pkg"/Microsoft.AspNetCore.App.Ref.*.nupkg
         "$pkg"/Microsoft.AspNetCore.App.Runtime."$target_rid".*.nupkg
     )
 
     local out_dir_sources=(
         "$ins"/*
+        "$pkg"/Microsoft.AspNetCore.App.Ref.*.nupkg
         "$pkg"/Microsoft.AspNetCore.App.Runtime."$target_rid".*.nupkg
         "$pkg"/Microsoft.DotNet.Web.*.nupkg
+    )
+
+    local download_dir_sources=(
+        "$ins"/aspnetcore-runtime-*-"$target_rid".tar.gz
+        "$ins"/aspnetcore-targeting-pack-*-"$target_rid".tar.gz
     )
 
     local download_aspnetcore_dir="${DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_ASPNETCORE_REQUESTED_VERSION}"
@@ -256,12 +294,10 @@ organize_aspnetcore_artifacts() {
     mkdir -p "$OUT_DIR"
     mkdir -p "$PACKAGES_DIR"
 
-    cp -v "${packages_dir_sources[@]}" "$PACKAGES_DIR"
-    cp -v "${out_dir_sources[@]}" "$OUT_DIR"
-
+    _cp_into_with_masquerade "$PACKAGES_DIR" "$DOTNET_ASPNETCORE_REQUESTED_VERSION" "${packages_dir_sources[@]}"
+    _cp_into_with_masquerade "$OUT_DIR" "$DOTNET_ASPNETCORE_REQUESTED_VERSION" "${out_dir_sources[@]}"
+    _cp_into_with_masquerade "$download_aspnetcore_dir" "$DOTNET_ASPNETCORE_REQUESTED_VERSION" "${download_dir_sources[@]}"
     cp -v "$ins"/aspnetcore_base_runtime.version "$download_aspnetcore_dir/"
-    cp -v "$ins"/aspnetcore-runtime-*-"$target_rid".tar.gz "$download_aspnetcore_dir/aspnetcore-runtime-${DOTNET_ASPNETCORE_REQUESTED_VERSION}-${target_rid}.tar.gz"
-    cp -v "$ins"/aspnetcore-targeting-pack-*-"$target_rid".tar.gz "$download_aspnetcore_dir/aspnetcore-targeting-pack-${DOTNET_ASPNETCORE_REQUESTED_VERSION}-${target_rid}.tar.gz"
 
     popd > /dev/null
     endgroup
@@ -286,8 +322,28 @@ build_sdk() {
         /p:PublicBaseURL="file://${DOWNLOADS_DIR}/"
     )
 
-    # TODO: aspnetcore
     ./build.sh "${args[@]}"
+    popd > /dev/null
+    endgroup
+}
+
+organize_sdk_artifacts() {
+    local sdk_root="$1"
+    local target_arch="loongarch64"
+    local target_rid="linux-$target_arch"
+    local build_configuration=Release
+
+    group "organizing sdk artifacts"
+    pushd "$sdk_root/artifacts/packages/$build_configuration/Shipping" > /dev/null
+
+    local out_dir_sources=(
+        "dotnet-sdk-*-${target_rid}.tar.*"
+    )
+
+    mkdir -p "$OUT_DIR"
+
+    cp "${out_dir_sources[@]}" "$OUT_DIR"
+
     popd > /dev/null
     endgroup
 }
@@ -301,6 +357,7 @@ main() {
     build_aspnetcore "$DOTNET_ASPNETCORE_CHECKOUT"
     organize_aspnetcore_artifacts "$DOTNET_ASPNETCORE_CHECKOUT"
     build_sdk "$DOTNET_SDK_CHECKOUT"
+    organize_sdk_artifacts "$DOTNET_SDK_CHECKOUT"
 }
 
 main
