@@ -337,7 +337,7 @@ organize_sdk_artifacts() {
     pushd "$sdk_root/artifacts/packages/$build_configuration/Shipping" > /dev/null
 
     local out_dir_sources=(
-        "dotnet-sdk-*-${target_rid}.tar.*"
+        dotnet-sdk-*-"${target_rid}".tar.*
     )
 
     mkdir -p "$OUT_DIR"
