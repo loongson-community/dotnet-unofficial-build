@@ -142,7 +142,7 @@ build_runtime() {
 
     group "building runtime"
     pushd "$runtime_root" > /dev/null
-    ./build.sh clr+libs+packs --ci -c "$build_configuration" --cross --arch "$target_arch"
+    ./build.sh clr+libs+packs -c "$build_configuration" --cross --arch "$target_arch"
     popd > /dev/null
     endgroup
 }
@@ -214,7 +214,6 @@ build_aspnetcore() {
 
     local args=(
         --pack
-        # --ci
         -c "$build_configuration"
         --arch "$target_arch"
         --no-test
@@ -277,7 +276,6 @@ build_sdk() {
 
     local args=(
         --pack
-        --ci
         -c "$build_configuration"
         /p:Architecture="$target_arch"
         /p:HostRid=linux-x64
