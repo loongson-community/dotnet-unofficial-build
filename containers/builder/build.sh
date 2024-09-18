@@ -53,7 +53,9 @@ PACKAGES=(
     # for dotnet-unofficial-build self use
     ccache  # to enable local build caches
     docker.io  # to pull back the rootfs image in container form
+    pigz  # to decompress gzip faster
     sccache  # to enable potential caching with object storage backend
+    zstd  # to repack the tarballs for smaller size
 )
 
 apt-get update
