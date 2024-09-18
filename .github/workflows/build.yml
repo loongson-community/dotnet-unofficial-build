@@ -21,7 +21,7 @@ jobs:
     outputs:
       run_id: ${{ github.run_id }}
     container:
-      image: ghcr.io/loongson-community/dotnet-unofficial-build-builder:20240918T112936Z
+      image: ghcr.io/loongson-community/dotnet-unofficial-build-builder:20240918T124748Z
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
