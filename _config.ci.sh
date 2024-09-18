@@ -17,7 +17,7 @@ fi
 # the tag/branch in the CI task definition
 DOTNET_VMR_CHECKED_OUT=false
 DOTNET_VMR_CHECKOUT="/vmr"
-DOTNET_VMR_BRANCH="main-9.x-loong"
+DOTNET_VMR_BRANCH="v9.0.0-rc.1.24431.7+loong.20240918"
 DOTNET_VMR_REPO=https://github.com/loongson-community/dotnet.git
 
 ROOTFS_IMAGE_TAG="ghcr.io/loongson-community/dotnet-unofficial-build-rootfs:e0a68f5b86f8-20240904T171513Z"
