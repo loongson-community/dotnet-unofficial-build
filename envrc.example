@@ -1,0 +1,10 @@
+export OUT_DIR="$(realpath ./test/out)"
+export ROOTFS_DIR="$(realpath ./test/rootfs)"
+
+if [[ -d ../dotnet ]]; then
+    DOTNET_VMR_CHECKOUT="$(realpath ../dotnet)"
+fi
+if [[ -d ../vmr ]]; then
+    DOTNET_VMR_CHECKOUT="$(realpath ../vmr)"
+fi
+export DOTNET_VMR_CHECKOUT
