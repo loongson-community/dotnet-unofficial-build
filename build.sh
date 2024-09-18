@@ -246,11 +246,17 @@ build_vmr_stage2() {
 main() {
     dump_config
     provision_loong_rootfs "$ROOTFS_IMAGE_TAG" "$ROOTFS_DIR"
-    prepare_sources
-    prepare_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
-    build_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
+
+    # stage2 wants to run crossgen2 but it's for $TARGET_ARCH instead of
+    # $BUILD_ARCH
+    : "${QEMU_LD_PREFIX:=$ROOTFS_DIR}"
+    export QEMU_LD_PREFIX
+
+    #prepare_sources
+    #prepare_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
+    #build_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
     unpack_sb_artifacts
-    prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
+    #prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
     build_vmr_stage2 "$DOTNET_VMR_CHECKOUT"
 }
 
