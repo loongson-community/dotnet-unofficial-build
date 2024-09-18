@@ -150,33 +150,43 @@ build_vmr_stage1() {
     )
     ./build.sh "${args[@]}"
 
-    # record the version of produced artifacts so we don't have to pull it out
-    # manually with shell
-    _BUILT_VERSION="$(cd artifacts/assets/Release && echo Private.SourceBuilt.Artifacts.*.tar.*)"
-    _BUILT_VERSION="${_BUILT_VERSION#Private.SourceBuilt.Artifacts.}"
-    _BUILT_VERSION="${_BUILT_VERSION%.${BUILD_RID}.tar.*}"
-
+    _detect_built_version artifacts/assets/Release
     mv artifacts/assets/Release/*.tar.* "$OUT_DIR"/
 
     popd > /dev/null
     endgroup
 }
 
-unpack_sb_artifacts() {
-    local version="$1"
+_detect_built_version() {
+    local dir="$1"
 
+    # record the version of produced artifacts so we don't have to pull it out
+    # manually with shell
+    _BUILT_VERSION="$(cd "$dir" && echo Private.SourceBuilt.Artifacts.*.${BUILD_RID}.tar.*)"
+    _BUILT_VERSION="${_BUILT_VERSION#Private.SourceBuilt.Artifacts.}"
+    _BUILT_VERSION="${_BUILT_VERSION%.${BUILD_RID}.tar.*}"
+}
+
+unpack_sb_artifacts() {
     group "unpacking source build artifacts from stage1"
+
+    [[ -z $_BUILT_VERSION ]] && _detect_built_version "$OUT_DIR"
+    if [[ -z $_BUILT_VERSION ]]; then
+        echo "fatal: artifact version not detected" >&2
+        exit 1
+    fi
+    echo "artifact version detected as $_BUILT_VERSION"
 
     _SB_ARTIFACTS_DIR="$(mktemp --tmpdir -d sb-artifacts.XXXXXXXX)"
     pushd "$_SB_ARTIFACTS_DIR" > /dev/null
     mkdir pkg sdk
 
     pushd pkg > /dev/null
-    tar xf "$OUT_DIR"/Private.SourceBuilt.Artifacts."$version"."$BUILD_RID".tar.*
+    tar xf "$OUT_DIR"/Private.SourceBuilt.Artifacts."$_BUILT_VERSION"."$BUILD_RID".tar.*
     popd > /dev/null
 
     pushd sdk > /dev/null
-    tar xf "$OUT_DIR"/dotnet-sdk-"$version"-"$BUILD_RID".tar.*
+    tar xf "$OUT_DIR"/dotnet-sdk-"$_BUILT_VERSION"-"$BUILD_RID".tar.*
     popd > /dev/null
 
     popd > /dev/null
@@ -239,13 +249,7 @@ main() {
     prepare_sources
     prepare_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
     build_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
-
-    if [[ -z $_BUILT_VERSION ]]; then
-        echo "fatal: artifact version not detected" >&2
-        exit 1
-    fi
-
-    unpack_sb_artifacts "$_BUILT_VERSION"
+    unpack_sb_artifacts
     prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
     build_vmr_stage2 "$DOTNET_VMR_CHECKOUT"
 }
