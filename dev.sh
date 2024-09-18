@@ -6,10 +6,9 @@ main() {
     local args=(
         --rm
         --platform linux/amd64
-        -v $(realpath ../aspnetcore):/aspnetcore
-        -v $(realpath ../runtime):/runtime
-        -v $(realpath ../sdk):/sdk
+        -v $(realpath ../dotnet):/vmr
         -v $(pwd):/work
+        -u b
         -ti
         "$builder_image_tag"
         /bin/bash

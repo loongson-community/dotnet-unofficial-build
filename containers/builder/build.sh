@@ -21,6 +21,7 @@ PACKAGES=(
     azure-cli
     cmake
     curl
+    file  # required by prep-source-build binary tool
     gdb
     git
     iputils-ping
