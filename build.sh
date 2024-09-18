@@ -20,10 +20,10 @@ echo
 : "${DOTNET_VMR_BRANCH:?DOTNET_VMR_BRANCH must be set}"
 : "${DOTNET_VMR_REPO:=https://github.com/dotnet/dotnet.git}"
 
-if [[ -n $DOTNET_VMR_CHECKOUT ]]; then
-    DOTNET_VMR_CHECKED_OUT=true
+: "${DOTNET_VMR_CHECKED_OUT:=false}"
+if "$DOTNET_VMR_CHECKED_OUT"; then
+    : "${DOTNET_VMR_CHECKOUT:?DOTNET_VMR_CHECKOUT must be set if DOTNET_VMR_CHECKED_OUT=true}"
 else
-    DOTNET_VMR_CHECKED_OUT=false
     : "${DOTNET_VMR_CHECKOUT:=/tmp/vmr}"
 fi
 
@@ -244,6 +244,8 @@ build_vmr_stage2() {
 }
 
 main() {
+    mkdir -p "$OUT_DIR"
+
     dump_config
     provision_loong_rootfs "$ROOTFS_IMAGE_TAG" "$ROOTFS_DIR"
 

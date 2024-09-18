@@ -1,0 +1,84 @@
+name: Build
+
+on:
+  push:
+    paths:
+      - '**.sh'
+    tags:
+      - '*'
+  pull_request:
+    paths:
+      - '**.sh'
+  merge_group:
+    types: [checks_requested]
+  # allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build .NET for LoongArch64
+    runs-on: ubuntu-latest
+    outputs:
+      run_id: ${{ github.run_id }}
+    container:
+      image: ghcr.io/loongson-community/dotnet-unofficial-build-builder:20240918T112936Z
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        BUILD_CONFIG: _config.ci.sh
+        CCACHE_DIR: /tmp/ccache
+        ROOTFS_DIR: /tmp/rootfs
+        OUT_DIR: /tmp/out
+
+    steps:
+      - name: Check out myself
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: loongarch64
+
+      - name: Cache C/C++ objects
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-dotnet9-r1
+          path: |
+            /tmp/ccache
+
+      - name: Run the build
+        run: ./build.sh
+
+      - name: Finalize output
+        run: ./finalize-output.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-out
+          path: /tmp/out/
+          compression-level: 0  # all artifacts are already compressed
+
+  release:
+    name: Make a GitHub Release
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    needs:
+      - build
+    steps:
+      - name: Checkout myself
+        uses: actions/checkout@v4
+
+      - name: Download artifacts for release
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ needs.build.outputs.run_id }}
+          path: tmp/release
+
+      - name: Make the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: tmp/release/*
+          generate_release_notes: false
+          prerelease: false  # treat upstream preview releases as non-prerelease too
