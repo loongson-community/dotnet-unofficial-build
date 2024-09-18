@@ -252,11 +252,11 @@ main() {
     : "${QEMU_LD_PREFIX:=$ROOTFS_DIR}"
     export QEMU_LD_PREFIX
 
-    #prepare_sources
-    #prepare_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
-    #build_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
+    prepare_sources
+    prepare_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
+    build_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
     unpack_sb_artifacts
-    #prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
+    prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
     build_vmr_stage2 "$DOTNET_VMR_CHECKOUT"
 }
 
