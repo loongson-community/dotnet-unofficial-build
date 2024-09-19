@@ -34,6 +34,9 @@ fi
 : "${TARGET_RID:=linux-$TARGET_ARCH}"
 : "${BUILD_CFG:=Release}"
 
+# used by build-locally.sh to also finalize artifacts in this invocation
+: "${ALSO_FINALIZE:=false}"
+
 _SB_ARTIFACTS_DIR=
 _cleanup() {
     group "cleaning up"
@@ -260,6 +263,10 @@ main() {
     unpack_sb_artifacts
     prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
     build_vmr_stage2 "$DOTNET_VMR_CHECKOUT"
+
+    if "$ALSO_FINALIZE"; then
+        "$MY_DIR"/finalize-output.sh "$@"
+    fi
 }
 
-main
+main "$@"
