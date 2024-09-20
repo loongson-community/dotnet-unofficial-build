@@ -4,12 +4,19 @@ set -e
 
 MY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+. "$MY_DIR"/scripts/_utils.sh
+. "$MY_DIR"/_functions.sh
+
 # keep the image tag synced with GHA
 BUILDER_IMAGE_TAG="ghcr.io/loongson-community/dotnet-unofficial-build-builder:20240918T124748Z"
 
 main() {
     cd "$MY_DIR"
-    mkdir -p out tmp
+    mkdir -p out tmp/ccache tmp/rootfs tmp/vmr
+
+    # provision the rootfs outside of Docker in order to avoid DinD operation
+    local rootfs_image_tag="$(cat "$MY_DIR"/rootfs-image-tag.txt)"
+    provision_loong_rootfs "$rootfs_image_tag" tmp/rootfs sudo
 
     local args=(
         --rm
@@ -19,6 +26,7 @@ main() {
         -v "$MY_DIR"/tmp/ccache:/tmp/ccache
         -v "$MY_DIR"/out:/tmp/out
         -v "$MY_DIR"/tmp/rootfs:/tmp/rootfs
+        -v "$MY_DIR"/tmp/vmr:/vmr
 
         -e ALSO_FINALIZE=true
         # keep in line with GHA definitions for consistency

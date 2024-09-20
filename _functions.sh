@@ -26,6 +26,7 @@ dump_config() {
 provision_loong_rootfs() {
     local tag="$1"
     local destdir="$2"
+    local sudo="$3"
     local platform=linux/loong64
     local container_id
 
@@ -44,7 +45,7 @@ provision_loong_rootfs() {
 
     mkdir -p "$destdir" || true
     pushd "$destdir" > /dev/null
-    docker export "$container_id" | tar -xf -
+    docker export "$container_id" | $sudo tar -xf -
     touch .provisioned
     popd
 
