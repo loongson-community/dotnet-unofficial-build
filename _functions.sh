@@ -10,6 +10,7 @@ dump_config() {
     echo_kv TARGET_RID "$TARGET_RID"
     echo_kv BUILD_CFG "$BUILD_CFG"
     echo
+    echo_kv CCACHE_DIR "$CCACHE_DIR"
     echo_kv OUT_DIR "$OUT_DIR"
     echo_kv ROOTFS_DIR "$ROOTFS_DIR"
     echo_kv ROOTFS_IMAGE_TAG "$ROOTFS_IMAGE_TAG"
@@ -21,6 +22,22 @@ dump_config() {
     echo_kv "  branch" "$DOTNET_VMR_BRANCH"
     echo_kv "  checkout" "$DOTNET_VMR_CHECKOUT"
     echo
+
+    if [[ -n "$CI" ]]; then
+        group "environment variables"
+        env
+        endgroup
+    fi
+}
+
+maybe_dump_ccache_stats() {
+    if [[ -z $CCACHE_DIR ]]; then
+        return 0
+    fi
+
+    group "ccache stats"
+    ccache -s
+    endgroup
 }
 
 provision_loong_rootfs() {

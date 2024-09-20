@@ -65,10 +65,13 @@ main() {
 
     prepare_sources
     prepare_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
+    maybe_dump_ccache_stats
     build_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
     unpack_sb_artifacts
     prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
+    maybe_dump_ccache_stats
     build_vmr_stage2 "$DOTNET_VMR_CHECKOUT"
+    maybe_dump_ccache_stats
 
     if "$ALSO_FINALIZE"; then
         "$MY_DIR"/finalize-output.sh "$@"
