@@ -17,6 +17,11 @@ rootfs_image_tag() {
 # CLI output helpers
 #
 
+if [[ -z $TERM || $TERM == dumb ]]; then
+    TERM=ansi
+fi
+export TERM
+
 declare -A _TERM_SEQ_MAP=(
     ["reset"]="$(tput sgr0)"
     ["bold"]="$(tput bold)"
