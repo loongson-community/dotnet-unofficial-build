@@ -38,6 +38,9 @@ fi
 # used by build-locally.sh to also finalize artifacts in this invocation
 : "${ALSO_FINALIZE:=false}"
 
+# disable Microsoft dotnet telemetry by default
+: "${DOTNET_CLI_TELEMETRY_OPTOUT:=1}"
+
 _SB_ARTIFACTS_DIR=
 _cleanup() {
     group "cleaning up"
