@@ -2,13 +2,7 @@ name: Build
 
 on:
   push:
-    paths:
-      - '**.sh'
-    tags:
-      - '*'
   pull_request:
-    paths:
-      - '**.sh'
   merge_group:
     types: [checks_requested]
   # allow manual triggering
