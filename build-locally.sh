@@ -29,6 +29,7 @@ main() {
         -v "$MY_DIR"/tmp/vmr:/vmr
 
         -e ALSO_FINALIZE=true
+        -e CI=true
         # keep in line with GHA definitions for consistency
         -e BUILD_CONFIG=_config.ci.sh
         -e CCACHE_DIR=/tmp/ccache
@@ -37,7 +38,6 @@ main() {
 
         -u b
         -w /work
-        -ti
         "$BUILDER_IMAGE_TAG"
         ./build.sh
     )
