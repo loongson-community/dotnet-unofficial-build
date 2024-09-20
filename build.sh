@@ -40,6 +40,7 @@ fi
 
 # disable Microsoft dotnet telemetry by default
 : "${DOTNET_CLI_TELEMETRY_OPTOUT:=1}"
+export DOTNET_CLI_TELEMETRY_OPTOUT
 
 _SB_ARTIFACTS_DIR=
 _cleanup() {
