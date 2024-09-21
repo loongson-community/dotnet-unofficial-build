@@ -36,6 +36,7 @@ main() {
         -e OUT_DIR=/tmp/out
         -e ROOTFS_DIR=/tmp/rootfs
 
+        --init
         -u b
         -w /work
         "$BUILDER_IMAGE_TAG"
