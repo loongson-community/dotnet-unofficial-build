@@ -124,7 +124,9 @@ build_vmr_stage1() {
         -v detailed
         /p:PortableBuild=true
     )
-    ./build.sh "${args[@]}"
+    # CI=true interferes with dotnet/aspire's build
+    # see https://github.com/dotnet/dotnet/blob/v9.0.0-rc.1.24431.7/src/aspire/Directory.Build.targets#L18
+    CI= ./build.sh "${args[@]}"
 
     _detect_built_version artifacts/assets/Release
     mv artifacts/assets/Release/*.tar.* "$OUT_DIR"/
@@ -211,7 +213,9 @@ build_vmr_stage2() {
         /p:PortableRid="$TARGET_RID"
         /p:TargetArchitecture="$TARGET_ARCH"
     )
-    ./build.sh "${args[@]}"
+    # CI=true interferes with dotnet/aspire's build
+    # see https://github.com/dotnet/dotnet/blob/v9.0.0-rc.1.24431.7/src/aspire/Directory.Build.targets#L18
+    CI= ./build.sh "${args[@]}"
 
     mv artifacts/assets/Release/*.tar.* "$OUT_DIR"/
 
