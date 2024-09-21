@@ -9,72 +9,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build .NET for LoongArch64
-    runs-on: loongson-community-runners  # ubuntu-latest is too small for the build to finish in 6hr
-    outputs:
-      run_id: ${{ github.run_id }}
-    container:
-      image: ghcr.io/loongson-community/dotnet-unofficial-build-builder:20240918T124748Z
-      options: --init  # to take care of msbuild & roslyn build server processes
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-      env:
-        BUILD_CONFIG: _config.ci.sh
-        CCACHE_DIR: /tmp/ccache
-        ROOTFS_DIR: /tmp/rootfs
-        OUT_DIR: /tmp/out
-
-    steps:
-      - name: Check out myself
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          image: "ghcr.io/loongson-community/binfmt:qemu-v9.0.2-loong.20240919"
-          platforms: loong64
-
-      - name: Cache C/C++ objects
-        uses: actions/cache@v4
-        with:
-          key: ${{ runner.os }}-dotnet9-r1
-          path: |
-            /tmp/ccache
-
-      - name: Run the build
-        run: ./build.sh
-
-      - name: Finalize output
-        run: ./finalize-output.sh
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-out
-          path: /tmp/out/
-          compression-level: 0  # all artifacts are already compressed
-
-  release:
-    name: Make a GitHub Release
+  debug-release-layout:
+    name: Debug the release artifact layout
     runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    needs:
-      - build
     steps:
-      - name: Checkout myself
-        uses: actions/checkout@v4
-
       - name: Download artifacts for release
         uses: actions/download-artifact@v4
         with:
-          run-id: ${{ needs.build.outputs.run_id }}
+          run-id: 10971058923  # ${{ needs.build.outputs.run_id }}
+          github-token: ${{ secrets.GH_PAT }} # token with actions:read permissions on target repo
           path: tmp/release
 
-      - name: Make the release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: tmp/release/*
-          generate_release_notes: false
-          prerelease: false  # treat upstream preview releases as non-prerelease too
+      - name: Debug
+        run: pwd && ls -alFR tmp/release
