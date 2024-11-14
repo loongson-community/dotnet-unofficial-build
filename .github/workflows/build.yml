@@ -75,6 +75,7 @@ jobs:
       - name: Make the release
         uses: softprops/action-gh-release@v2
         with:
+          body_path: ${{ github.workspace }}/release-notes.md
           files: tmp/release/*
           generate_release_notes: false
           prerelease: false  # treat upstream preview releases as non-prerelease too
