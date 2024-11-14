@@ -72,10 +72,13 @@ jobs:
           run-id: ${{ needs.build.outputs.run_id }}
           path: tmp/release
 
+      - name: Check the artifacts
+        run: ls -alF tmp/release/build-out
+
       - name: Make the release
         uses: softprops/action-gh-release@v2
         with:
-          body_path: ${{ github.workspace }}/release-notes.md
-          files: tmp/release/*
+          body_path: release-notes.md
+          files: tmp/release/build-out/*
           generate_release_notes: false
           prerelease: false  # treat upstream preview releases as non-prerelease too
