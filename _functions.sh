@@ -143,6 +143,13 @@ _detect_built_version() {
     _BUILT_VERSION="$(cd "$dir" && echo Private.SourceBuilt.Artifacts.*.${BUILD_RID}.tar.*)"
     _BUILT_VERSION="${_BUILT_VERSION#Private.SourceBuilt.Artifacts.}"
     _BUILT_VERSION="${_BUILT_VERSION%.${BUILD_RID}.tar.*}"
+
+    _SDK_VERSION="$(cd "$dir" && echo dotnet-sdk-*-${BUILD_RID}.tar.*)"
+    _SDK_VERSION="${_SDK_VERSION#dotnet-sdk-}"
+    _SDK_VERSION="${_SDK_VERSION%-${BUILD_RID}.tar.*}"
+
+    echo "artifact version detected as $_BUILT_VERSION"
+    echo "SDK version detected as $_SDK_VERSION"
 }
 
 unpack_sb_artifacts() {
@@ -153,7 +160,6 @@ unpack_sb_artifacts() {
         echo "fatal: artifact version not detected" >&2
         exit 1
     fi
-    echo "artifact version detected as $_BUILT_VERSION"
 
     _SB_ARTIFACTS_DIR="$(mktemp --tmpdir -d sb-artifacts.XXXXXXXX)"
     pushd "$_SB_ARTIFACTS_DIR" > /dev/null
@@ -164,7 +170,7 @@ unpack_sb_artifacts() {
     popd > /dev/null
 
     pushd sdk > /dev/null
-    tar xf "$OUT_DIR"/dotnet-sdk-"$_BUILT_VERSION"-"$BUILD_RID".tar.*
+    tar xf "$OUT_DIR"/dotnet-sdk-"$_SDK_VERSION"-"$BUILD_RID".tar.*
     popd > /dev/null
 
     popd > /dev/null
