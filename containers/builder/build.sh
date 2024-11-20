@@ -9,9 +9,9 @@ PACKAGES=(
     wget
 
     # llvm/clang utils
-    clang-18
-    lld-18
-    llvm-18
+    clang-19
+    lld-19
+    llvm-19
 
     # PowerShell install deps
     apt-transport-https

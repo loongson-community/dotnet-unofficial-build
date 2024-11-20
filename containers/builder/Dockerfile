@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM debian:trixie-20240904
+FROM debian:sid-20241111
 
 ARG BUILD_TIMESTAMP
 ARG BUILDER_USER=b

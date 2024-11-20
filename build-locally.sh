@@ -8,7 +8,7 @@ MY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$MY_DIR"/_functions.sh
 
 # keep the image tag synced with GHA
-BUILDER_IMAGE_TAG="ghcr.io/loongson-community/dotnet-unofficial-build-builder:20240918T124748Z"
+BUILDER_IMAGE_TAG="ghcr.io/loongson-community/dotnet-unofficial-build-builder:20241120T105715Z"
 
 main() {
     cd "$MY_DIR"

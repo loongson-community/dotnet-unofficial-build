@@ -15,7 +15,7 @@ jobs:
     outputs:
       run_id: ${{ github.run_id }}
     container:
-      image: ghcr.io/loongson-community/dotnet-unofficial-build-builder:20240918T124748Z
+      image: ghcr.io/loongson-community/dotnet-unofficial-build-builder:20241120T105715Z
       options: --init  # to take care of msbuild & roslyn build server processes
       credentials:
         username: ${{ github.actor }}
