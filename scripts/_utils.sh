@@ -1,5 +1,6 @@
 # this file is meant to be sourced
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 _IMAGE_TAG_PREFIX="ghcr.io/loongson-community"
 
 builder_image_tag() {
@@ -63,6 +64,15 @@ echo_kv() {
     shift
 
     echo "$(_term yellow)${k}: $(_term cyan)$@$(_term reset)"
+}
+
+ensure_git_safety() {
+    [[ -n $CI ]] || return 0
+    [[ -O "$REPO_ROOT" ]] && return 0
+
+    group "telling Git to consider the repo as safe"
+    git config --global --add safe.directory "$REPO_ROOT"
+    endgroup
 }
 
 get_commit_time() {

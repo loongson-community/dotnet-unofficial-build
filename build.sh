@@ -56,6 +56,7 @@ trap _cleanup EXIT
 main() {
     mkdir -p "$OUT_DIR"
 
+    ensure_git_safety
     dump_config
     init_source_epoch
     provision_loong_rootfs "$ROOTFS_IMAGE_TAG" "$ROOTFS_DIR"
