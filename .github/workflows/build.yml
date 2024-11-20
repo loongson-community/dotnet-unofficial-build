@@ -2,7 +2,9 @@ name: Build
 
 on:
   push:
-  pull_request:
+    tags:
+      - 'v**'
+  # pull_request:
   merge_group:
     types: [checks_requested]
   # allow manual triggering
