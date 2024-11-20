@@ -165,7 +165,7 @@ unpack_sb_artifacts() {
         exit 1
     fi
 
-    _SB_ARTIFACTS_DIR="$(mktemp --tmpdir -d sb-artifacts.XXXXXXXX)"
+    _SB_ARTIFACTS_DIR="$(mktemp --tmpdir -d stage1.XXXXXXXX)"
     pushd "$_SB_ARTIFACTS_DIR" > /dev/null
     mkdir pkg sdk
 
