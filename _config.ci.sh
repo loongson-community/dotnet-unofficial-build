@@ -17,7 +17,7 @@ fi
 # the tag/branch in the CI task definition
 DOTNET_VMR_CHECKED_OUT=false
 DOTNET_VMR_CHECKOUT="/vmr"
-DOTNET_VMR_BRANCH="v9.0.0+loong.20241117"
+DOTNET_VMR_BRANCH="v9.0.0+loong.20241120"
 DOTNET_VMR_REPO=https://github.com/loongson-community/dotnet.git
 
 ROOTFS_IMAGE_TAG="$(cat "$(dirname "${BASH_SOURCE[0]}")"/rootfs-image-tag.txt)"
