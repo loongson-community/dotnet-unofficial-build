@@ -64,3 +64,21 @@ echo_kv() {
 
     echo "$(_term yellow)${k}: $(_term cyan)$@$(_term reset)"
 }
+
+get_commit_time() {
+  TZ=UTC0 git log -1 \
+    --format='tformat:%cd' \
+    --date='format:%Y-%m-%dT%H:%M:%SZ' \
+    "$@"
+}
+
+init_source_epoch() {
+    if [[ -n $SOURCE_EPOCH ]]; then
+        echo "source epoch is explicitly set"
+    else
+        echo "deriving source epoch from dotnet-unofficial-build repository HEAD"
+        export SOURCE_EPOCH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && get_commit_time)"
+    fi
+
+    echo_kv SOURCE_EPOCH "$SOURCE_EPOCH"
+}

@@ -131,6 +131,10 @@ build_vmr_stage1() {
     _detect_built_version artifacts/assets/Release
     mv artifacts/assets/Release/*.tar.* "$OUT_DIR"/
 
+    local feed_dir="$OUT_DIR/sdk-feed-stage1"
+    mkdir -p "$feed_dir"
+    mv artifacts/assets/Release/* "$feed_dir"/
+
     popd > /dev/null
     endgroup
 }
@@ -224,6 +228,10 @@ build_vmr_stage2() {
     CI= ./build.sh "${args[@]}"
 
     mv artifacts/assets/Release/*.tar.* "$OUT_DIR"/
+
+    local feed_dir="$OUT_DIR/sdk-feed-stage2"
+    mkdir -p "$feed_dir"
+    mv artifacts/assets/Release/* "$feed_dir"/
 
     popd > /dev/null
     endgroup

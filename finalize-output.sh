@@ -60,11 +60,13 @@ repack_tarballs() {
 
 # operates in CWD
 gen_checksums() {
+    group "checksumming tarballs"
+
     local f
-    for f in *.tar.*; do
-        if [[ $f == "*.tar.*" ]]; then
+    for f in *.tar *.tar.*; do
+        if [[ $f == "*.tar" || $f == "*.tar.*" ]]; then
             # path expansion produced no result
-            return 0
+            continue
         fi
 
         echo "  - $f"
@@ -72,9 +74,46 @@ gen_checksums() {
         sha512sum "$f" > "$f".sha512 &
         wait
     done
+
+    endgroup
+}
+
+pack_sdk_feed() {
+    local stage="$1"
+    local feed_dir="sdk-feed-stage$stage"
+
+    group "packing Stage $stage SDK feed content"
+
+    local args=(
+        # Reproducibility
+        # see https://www.gnu.org/software/tar/manual/html_section/Reproducibility.html
+        --sort=name
+        --format=posix
+        --pax-option='exthdr.name=%d/PaxHeaders/%f'
+        --pax-option='delete=atime,delete=ctime'
+        --clamp-mtime
+        --mtime="$SOURCE_EPOCH"
+        --numeric-owner
+        --owner=0
+        --group=0
+        # but preserve file modes because we're not producing only plain-old data
+
+        # no compression as majority of the content is already compressed
+        -cvf "$feed_dir".tar
+        "./$feed_dir"
+    )
+    LC_ALL=C tar "${args[@]}"
+
+    # not strictly necessary because the upload-artifact action can filter out
+    # the extra files, but it may be good to conserve disk space anyway
+    rm -rf "./$feed_dir"
+
+    endgroup
 }
 
 main() {
+    init_source_epoch
+
     pushd "$OUT_DIR" > /dev/null
 
     if "$REPACK_TARBALLS"; then
@@ -86,9 +125,11 @@ main() {
         echo
     fi
 
-    group "checksumming tarballs"
+    for stage in 1 2; do
+        pack_sdk_feed "$stage"
+    done
+
     gen_checksums
-    endgroup
 
     popd > /dev/null
 }

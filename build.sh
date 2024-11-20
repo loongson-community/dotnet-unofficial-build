@@ -57,6 +57,7 @@ main() {
     mkdir -p "$OUT_DIR"
 
     dump_config
+    init_source_epoch
     provision_loong_rootfs "$ROOTFS_IMAGE_TAG" "$ROOTFS_DIR"
 
     # stage2 wants to run crossgen2 but it's for $TARGET_ARCH instead of

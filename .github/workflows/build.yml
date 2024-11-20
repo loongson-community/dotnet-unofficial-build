@@ -53,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-out
-          path: /tmp/out/
+          path: /tmp/out/*.tar*
           compression-level: 0  # all artifacts are already compressed
 
   release:
