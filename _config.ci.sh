@@ -2,8 +2,8 @@
 
 # Config and basic preparations suitable for our GHA environment.
 
-# expect CCACHE_DIR, OUT_DIR and ROOTFS_DIR to be set by the task definition
-mkdir -p "$CCACHE_DIR" "$OUT_DIR" "$ROOTFS_DIR"
+# expect CCACHE_DIR, OUT_DIR and ROOTFS_{GLIBC,MUSL}_DIR to be set by the task definition
+mkdir -p "$CCACHE_DIR" "$OUT_DIR" "$ROOTFS_GLIBC_DIR" "$ROOTFS_MUSL_DIR"
 
 # enable ccache shims if ccache directory is specified
 if [[ -n $CCACHE_DIR ]]; then
@@ -20,7 +20,8 @@ DOTNET_VMR_CHECKOUT="/vmr"
 DOTNET_VMR_BRANCH="v9.0.0+loong.20241120"
 DOTNET_VMR_REPO=https://github.com/loongson-community/dotnet.git
 
-ROOTFS_IMAGE_TAG="$(cat "$(dirname "${BASH_SOURCE[0]}")"/rootfs-image-tag.txt)"
+ROOTFS_GLIBC_IMAGE_TAG="$(cat "$(dirname "${BASH_SOURCE[0]}")"/rootfs-glibc-image-tag.txt)"
+ROOTFS_MUSL_IMAGE_TAG="$(cat "$(dirname "${BASH_SOURCE[0]}")"/rootfs-musl-image-tag.txt)"
 
 # it may be better to align with dotnet upstream that still sticks with gzip
 # so far

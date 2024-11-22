@@ -78,11 +78,17 @@ gen_checksums() {
     endgroup
 }
 
-pack_sdk_feed() {
-    local stage="$1"
-    local feed_dir="sdk-feed-stage$stage"
+pack_sdk_feeds() {
+    local feed_dir
+    for feed_dir in "sdk-feed-stage"*; do
+        pack_sdk_feed "$feed_dir"
+    done
+}
 
-    group "packing Stage $stage SDK feed content"
+pack_sdk_feed() {
+    local feed_dir="$1"
+
+    group "packing SDK feed content: $feed_dir"
 
     local args=(
         # Reproducibility
@@ -125,9 +131,7 @@ main() {
         echo
     fi
 
-    for stage in 1 2; do
-        pack_sdk_feed "$stage"
-    done
+    pack_sdk_feeds
 
     gen_checksums
 

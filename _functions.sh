@@ -6,14 +6,19 @@
 dump_config() {
     group "build config dump"
     echo_kv BUILD_RID "$BUILD_RID"
-    echo_kv TARGET_ARCH "$TARGET_ARCH"
-    echo_kv TARGET_RID "$TARGET_RID"
     echo_kv BUILD_CFG "$BUILD_CFG"
+    echo_kv TARGET_ARCH "$TARGET_ARCH"
     echo
     echo_kv CCACHE_DIR "$CCACHE_DIR"
     echo_kv OUT_DIR "$OUT_DIR"
-    echo_kv ROOTFS_DIR "$ROOTFS_DIR"
-    echo_kv ROOTFS_IMAGE_TAG "$ROOTFS_IMAGE_TAG"
+    echo
+    echo_kv TARGET_GLIBC_RID "$TARGET_GLIBC_RID"
+    echo_kv ROOTFS_GLIBC_DIR "$ROOTFS_GLIBC_DIR"
+    echo_kv ROOTFS_GLIBC_IMAGE_TAG "$ROOTFS_GLIBC_IMAGE_TAG"
+    echo
+    echo_kv TARGET_MUSL_RID "$TARGET_MUSL_RID"
+    echo_kv ROOTFS_MUSL_DIR "$ROOTFS_MUSL_DIR"
+    echo_kv ROOTFS_MUSL_IMAGE_TAG "$ROOTFS_MUSL_IMAGE_TAG"
     endgroup
 
     group "source versions"
@@ -47,7 +52,7 @@ provision_loong_rootfs() {
     local platform=linux/loong64
     local container_id
 
-    group "provisioning $platform cross rootfs"
+    group "provisioning $platform cross rootfs into $destdir"
 
     if [[ -e "$destdir/.provisioned" ]]; then
         # TODO: check against the build info
@@ -206,8 +211,9 @@ prepare_vmr_stage2() {
 
 build_vmr_stage2() {
     local vmr_root="$1"
+    local target_rid="$2"
 
-    group "building stage2"
+    group "building $target_rid stage2"
     pushd "$vmr_root" > /dev/null
 
     local args=(
@@ -217,10 +223,10 @@ build_vmr_stage2() {
         -v detailed
         --with-sdk "$_SB_ARTIFACTS_DIR"/sdk
         --with-packages "$_SB_ARTIFACTS_DIR"/pkg
-        --target-rid "$TARGET_RID"
+        --target-rid "$target_rid"
         /p:PortableBuild=true
-        /p:HostRid="$TARGET_RID"
-        /p:PortableRid="$TARGET_RID"
+        /p:HostRid="$target_rid"
+        /p:PortableRid="$target_rid"
         /p:TargetArchitecture="$TARGET_ARCH"
     )
     # CI=true interferes with dotnet/aspire's build
@@ -229,7 +235,7 @@ build_vmr_stage2() {
 
     mv artifacts/assets/Release/*.tar.* "$OUT_DIR"/
 
-    local feed_dir="$OUT_DIR/sdk-feed-stage2"
+    local feed_dir="$OUT_DIR/sdk-feed-stage2-$target_rid"
     mkdir -p "$feed_dir"
     mv artifacts/assets/Release/* "$feed_dir"/
 

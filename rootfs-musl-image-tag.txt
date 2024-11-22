@@ -1,0 +1,1 @@
+ghcr.io/loongson-community/dotnet-unofficial-build-rootfs:95f50458d71c-20241122T091814Z-musl

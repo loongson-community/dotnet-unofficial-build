@@ -15,8 +15,14 @@ echo "sourcing build config from $(_term green)${BUILD_CONFIG}$(_term reset)"
 echo
 
 : "${OUT_DIR:?OUT_DIR must be set}"
-: "${ROOTFS_DIR:?ROOTFS_DIR must be set}"
-: "${ROOTFS_IMAGE_TAG:?ROOTFS_IMAGE_TAG must be set}"
+
+if [[ -n $ROOTFS_GLIBC_DIR ]]; then
+    : "${ROOTFS_GLIBC_IMAGE_TAG:?ROOTFS_GLIBC_IMAGE_TAG must be set when ROOTFS_GLIBC_DIR is specified}"
+fi
+
+if [[ -n $ROOTFS_MUSL_DIR ]]; then
+    : "${ROOTFS_MUSL_IMAGE_TAG:?ROOTFS_MUSL_IMAGE_TAG must be set when ROOTFS_MUSL_DIR is specified}"
+fi
 
 : "${DOTNET_VMR_BRANCH:?DOTNET_VMR_BRANCH must be set}"
 : "${DOTNET_VMR_REPO:=https://github.com/dotnet/dotnet.git}"
@@ -30,10 +36,17 @@ fi
 
 # TODO: probe with uname
 : "${BUILD_RID:=linux-x64}"
+: "${BUILD_CFG:=Release}"
 
 : "${TARGET_ARCH:=loongarch64}"
-: "${TARGET_RID:=linux-$TARGET_ARCH}"
-: "${BUILD_CFG:=Release}"
+
+if [[ -n $ROOTFS_GLIBC_DIR ]]; then
+    : "${TARGET_GLIBC_RID:=linux-$TARGET_ARCH}"
+fi
+
+if [[ -n $ROOTFS_MUSL_DIR ]]; then
+    : "${TARGET_MUSL_RID:=linux-musl-$TARGET_ARCH}"
+fi
 
 # used by build-locally.sh to also finalize artifacts in this invocation
 : "${ALSO_FINALIZE:=false}"
@@ -59,22 +72,41 @@ main() {
     ensure_git_safety
     dump_config
     init_source_epoch
-    provision_loong_rootfs "$ROOTFS_IMAGE_TAG" "$ROOTFS_DIR"
 
-    # stage2 wants to run crossgen2 but it's for $TARGET_ARCH instead of
-    # $BUILD_ARCH
-    : "${QEMU_LD_PREFIX:=$ROOTFS_DIR}"
-    export QEMU_LD_PREFIX
+    if [[ -n $ROOTFS_GLIBC_DIR ]]; then
+        provision_loong_rootfs "$ROOTFS_GLIBC_IMAGE_TAG" "$ROOTFS_GLIBC_DIR"
+    fi
+
+    if [[ -n $ROOTFS_MUSL_DIR ]]; then
+        provision_loong_rootfs "$ROOTFS_MUSL_IMAGE_TAG" "$ROOTFS_MUSL_DIR"
+    fi
 
     prepare_sources
+
     prepare_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
     maybe_dump_ccache_stats
     build_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
+    maybe_dump_ccache_stats
+
     unpack_sb_artifacts
-    prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
-    maybe_dump_ccache_stats
-    build_vmr_stage2 "$DOTNET_VMR_CHECKOUT"
-    maybe_dump_ccache_stats
+
+    if [[ -n $ROOTFS_GLIBC_DIR ]]; then
+        export ROOTFS_DIR="$ROOTFS_GLIBC_DIR"
+        # stage2 wants to run crossgen2 but it's for $TARGET_ARCH instead of
+        # $BUILD_ARCH
+        export QEMU_LD_PREFIX="$ROOTFS_DIR"
+        prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
+        build_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$TARGET_GLIBC_RID"
+        maybe_dump_ccache_stats
+    fi
+
+    if [[ -n $ROOTFS_MUSL_DIR ]]; then
+        export ROOTFS_DIR="$ROOTFS_MUSL_DIR"
+        export QEMU_LD_PREFIX="$ROOTFS_MUSL_DIR"
+        prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
+        build_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$TARGET_MUSL_RID"
+        maybe_dump_ccache_stats
+    fi
 
     if "$ALSO_FINALIZE"; then
         "$MY_DIR"/finalize-output.sh "$@"

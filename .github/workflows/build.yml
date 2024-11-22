@@ -25,7 +25,8 @@ jobs:
       env:
         BUILD_CONFIG: _config.ci.sh
         CCACHE_DIR: /tmp/ccache
-        ROOTFS_DIR: /tmp/rootfs
+        ROOTFS_GLIBC_DIR: /tmp/rootfs
+        ROOTFS_MUSL_DIR: /tmp/rootfs-musl
         OUT_DIR: /tmp/out
 
     steps:

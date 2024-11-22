@@ -1,10 +1,13 @@
 export OUT_DIR="$(realpath ./test/out)"
-export ROOTFS_DIR="$(realpath ./test/rootfs)"
+export ROOTFS_GLIBC_DIR="$(realpath ./test/rootfs)"
+export ROOTFS_MUSL_DIR="$(realpath ./test/rootfs-musl)"
 
 if [[ -d ../dotnet ]]; then
     DOTNET_VMR_CHECKOUT="$(realpath ../dotnet)"
+    export DOTNET_VMR_CHECKED_OUT=true
 fi
 if [[ -d ../vmr ]]; then
     DOTNET_VMR_CHECKOUT="$(realpath ../vmr)"
+    export DOTNET_VMR_CHECKED_OUT=true
 fi
 export DOTNET_VMR_CHECKOUT

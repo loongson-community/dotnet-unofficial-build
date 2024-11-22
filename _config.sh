@@ -1,6 +1,7 @@
 [[ -e .envrc ]] && . .envrc
 
-ROOTFS_IMAGE_TAG="ghcr.io/loongson-community/dotnet-unofficial-build-rootfs:e0a68f5b86f8-20240904T171513Z"
+ROOTFS_GLIBC_IMAGE_TAG="ghcr.io/loongson-community/dotnet-unofficial-build-rootfs:e0a68f5b86f8-20240904T171513Z"
+ROOTFS_MUSL_IMAGE_TAG="ghcr.io/loongson-community/dotnet-unofficial-build-rootfs:95f50458d71c-20241122T091814Z-musl"
 
 DOTNET_VMR_BRANCH="main-9.x-loong"
 DOTNET_VMR_REPO=https://github.com/loongson-community/dotnet.git
