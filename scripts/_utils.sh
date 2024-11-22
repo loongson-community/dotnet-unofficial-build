@@ -11,7 +11,16 @@ builder_image_tag() {
 rootfs_image_tag() {
     local arcade_commit="${1:0:12}"
     local timestamp="$2"
-    echo "${_IMAGE_TAG_PREFIX}/dotnet-unofficial-build-rootfs:${arcade_commit}-${timestamp}"
+    local libc_kind="$3"
+
+    local libc_suffix=""
+    case "$libc_kind" in
+    musl)
+        libc_suffix="-musl"
+        ;;
+    esac
+
+    echo "${_IMAGE_TAG_PREFIX}/dotnet-unofficial-build-rootfs:${arcade_commit}-${timestamp}${libc_suffix}"
 }
 
 #
