@@ -1,0 +1,26 @@
+name: PR checks
+
+on:
+  push:
+    paths:
+      - envrc.example
+      - '**.sh'
+      - '.github/**'
+      - 'scripts/**'
+
+  pull_request:
+    paths:
+      - envrc.example
+      - '**.sh'
+      - '.github/**'
+      - 'scripts/**'
+
+jobs:
+  shellcheck:
+    name: Lint shell scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint with shellcheck
+        run: |
+          shellcheck *.sh ./scripts/*.sh containers/*/*.sh envrc.example
