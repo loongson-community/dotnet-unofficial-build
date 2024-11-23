@@ -1,3 +1,7 @@
+#!/bin/bash
+# shellcheck disable=SC2034  # the file is meant to be sourced so no exports needed
+
+# shellcheck disable=SC1091  # this is up to the user
 [[ -e .envrc ]] && . .envrc
 
 ROOTFS_GLIBC_IMAGE_TAG="ghcr.io/loongson-community/dotnet-unofficial-build-rootfs:e0a68f5b86f8-20240904T171513Z"

@@ -6,8 +6,8 @@ main() {
     local args=(
         --rm
         --platform linux/amd64
-        -v $(realpath ../dotnet):/vmr
-        -v $(pwd):/work
+        -v "$(realpath ../dotnet)":/vmr
+        -v "$(pwd)":/work
         -u b
         -ti
         "$builder_image_tag"

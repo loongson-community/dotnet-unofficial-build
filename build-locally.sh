@@ -4,6 +4,7 @@ set -e
 
 MY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# shellcheck source-path=SCRIPTDIR
 . "$MY_DIR"/scripts/_utils.sh
 . "$MY_DIR"/_functions.sh
 
@@ -15,8 +16,10 @@ main() {
     mkdir -p out tmp/ccache tmp/rootfs tmp/rootfs-musl tmp/vmr
 
     # provision the rootfs outside of Docker in order to avoid DinD operation
-    local rootfs_glibc_image_tag="$(cat "$MY_DIR"/rootfs-glibc-image-tag.txt)"
-    local rootfs_musl_image_tag="$(cat "$MY_DIR"/rootfs-musl-image-tag.txt)"
+    local rootfs_glibc_image_tag
+    local rootfs_musl_image_tag
+    rootfs_glibc_image_tag="$(cat "$MY_DIR"/rootfs-glibc-image-tag.txt)"
+    rootfs_musl_image_tag="$(cat "$MY_DIR"/rootfs-musl-image-tag.txt)"
     provision_loong_rootfs "$rootfs_glibc_image_tag" tmp/rootfs sudo
     provision_loong_rootfs "$rootfs_musl_image_tag" tmp/rootfs-musl sudo
 

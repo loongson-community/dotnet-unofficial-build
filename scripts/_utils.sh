@@ -1,3 +1,4 @@
+#!/bin/bash
 # this file is meant to be sourced
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -70,9 +71,9 @@ endgroup() {
 # usage: echo_kv <k> <v>
 echo_kv() {
     local k="$1"
-    shift
+    local v="$2"
 
-    echo "$(_term yellow)${k}: $(_term cyan)$@$(_term reset)"
+    echo "$(_term yellow)${k}: $(_term cyan)${v}$(_term reset)"
 }
 
 ensure_git_safety() {
@@ -87,8 +88,7 @@ ensure_git_safety() {
 get_commit_time() {
   TZ=UTC0 git log -1 \
     --format='tformat:%cd' \
-    --date='format:%Y-%m-%dT%H:%M:%SZ' \
-    "$@"
+    --date='format:%Y-%m-%dT%H:%M:%SZ'
 }
 
 init_source_epoch() {
@@ -96,7 +96,8 @@ init_source_epoch() {
         echo "source epoch is explicitly set"
     else
         echo "deriving source epoch from dotnet-unofficial-build repository HEAD"
-        export SOURCE_EPOCH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && get_commit_time)"
+        SOURCE_EPOCH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && get_commit_time)"
+        export SOURCE_EPOCH
     fi
 
     echo_kv SOURCE_EPOCH "$SOURCE_EPOCH"

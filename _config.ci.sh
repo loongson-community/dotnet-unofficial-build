@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034  # the file is meant to be sourced so no exports needed
 
 # Config and basic preparations suitable for our GHA environment.
 

@@ -4,12 +4,14 @@ set -e
 
 MY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# shellcheck source-path=SCRIPTDIR
 . "$MY_DIR"/scripts/_utils.sh
 
 : "${BUILD_CONFIG:=$1}"
 : "${BUILD_CONFIG:=$MY_DIR/_config.sh}"
 
 echo "sourcing build config from $(_term green)${BUILD_CONFIG}$(_term reset)"
+# shellcheck source=_config.sh
 . "$BUILD_CONFIG"
 echo
 
@@ -120,7 +122,7 @@ pack_sdk_feed() {
 main() {
     init_source_epoch
 
-    pushd "$OUT_DIR" > /dev/null
+    pushd "$OUT_DIR" > /dev/null || return
 
     if "$REPACK_TARBALLS"; then
         group "repacking tarballs with zstd"
@@ -135,7 +137,7 @@ main() {
 
     gen_checksums
 
-    popd > /dev/null
+    popd > /dev/null || return
 }
 
 main

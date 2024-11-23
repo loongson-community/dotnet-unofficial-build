@@ -66,10 +66,10 @@ provision_loong_rootfs() {
     echo "temp container ID is $(_term green)${container_id}$(_term reset)"
 
     mkdir -p "$destdir" || true
-    pushd "$destdir" > /dev/null
+    pushd "$destdir" > /dev/null || return
     docker export "$container_id" | $sudo tar -xf -
     touch .provisioned
-    popd
+    popd > /dev/null || return
 
     docker rm "$container_id"
 
@@ -108,9 +108,9 @@ prepare_vmr_stage1() {
     local vmr_root="$1"
 
     group "preparing VMR for stage1 build"
-    pushd "$vmr_root" > /dev/null
+    pushd "$vmr_root" > /dev/null || return
     ./prep-source-build.sh
-    popd > /dev/null
+    popd > /dev/null || return
     endgroup
 }
 
@@ -120,7 +120,7 @@ build_vmr_stage1() {
     local vmr_root="$1"
 
     group "building stage1"
-    pushd "$vmr_root" > /dev/null
+    pushd "$vmr_root" > /dev/null || return
 
     local args=(
         -so
@@ -131,7 +131,7 @@ build_vmr_stage1() {
     )
     # CI=true interferes with dotnet/aspire's build
     # see https://github.com/dotnet/dotnet/blob/v9.0.0-rc.1.24431.7/src/aspire/Directory.Build.targets#L18
-    CI= ./build.sh "${args[@]}"
+    CI='' ./build.sh "${args[@]}"
 
     _detect_built_version artifacts/assets/Release
     mv artifacts/assets/Release/*.tar.* "$OUT_DIR"/
@@ -140,7 +140,7 @@ build_vmr_stage1() {
     mkdir -p "$feed_dir"
     mv artifacts/assets/Release/* "$feed_dir"/
 
-    popd > /dev/null
+    popd > /dev/null || return
     endgroup
 }
 
@@ -149,13 +149,13 @@ _detect_built_version() {
 
     # record the version of produced artifacts so we don't have to pull it out
     # manually with shell
-    _BUILT_VERSION="$(cd "$dir" && echo Private.SourceBuilt.Artifacts.*.${BUILD_RID}.tar.*)"
+    _BUILT_VERSION="$(cd "$dir" && echo Private.SourceBuilt.Artifacts.*."$BUILD_RID".tar.*)"
     _BUILT_VERSION="${_BUILT_VERSION#Private.SourceBuilt.Artifacts.}"
-    _BUILT_VERSION="${_BUILT_VERSION%.${BUILD_RID}.tar.*}"
+    _BUILT_VERSION="${_BUILT_VERSION%."$BUILD_RID".tar.*}"
 
-    _SDK_VERSION="$(cd "$dir" && echo dotnet-sdk-*-${BUILD_RID}.tar.*)"
+    _SDK_VERSION="$(cd "$dir" && echo dotnet-sdk-*-"$BUILD_RID".tar.*)"
     _SDK_VERSION="${_SDK_VERSION#dotnet-sdk-}"
-    _SDK_VERSION="${_SDK_VERSION%-${BUILD_RID}.tar.*}"
+    _SDK_VERSION="${_SDK_VERSION%-"$BUILD_RID".tar.*}"
 
     echo "artifact version detected as $_BUILT_VERSION"
     echo "SDK version detected as $_SDK_VERSION"
@@ -171,27 +171,26 @@ unpack_sb_artifacts() {
     fi
 
     _SB_ARTIFACTS_DIR="$(mktemp --tmpdir -d stage1.XXXXXXXX)"
-    pushd "$_SB_ARTIFACTS_DIR" > /dev/null
+    pushd "$_SB_ARTIFACTS_DIR" > /dev/null || return
     mkdir pkg sdk
 
-    pushd pkg > /dev/null
+    pushd pkg > /dev/null || return
     tar xf "$OUT_DIR"/Private.SourceBuilt.Artifacts."$_BUILT_VERSION"."$BUILD_RID".tar.*
-    popd > /dev/null
+    popd > /dev/null || return
 
-    pushd sdk > /dev/null
+    pushd sdk > /dev/null || return
     tar xf "$OUT_DIR"/dotnet-sdk-"$_SDK_VERSION"-"$BUILD_RID".tar.*
-    popd > /dev/null
+    popd > /dev/null || return
 
-    popd > /dev/null
+    popd > /dev/null || return
     endgroup
 }
 
 prepare_vmr_stage2() {
     local vmr_root="$1"
-    local version="$2"
 
     group "preparing VMR for stage2 build"
-    pushd "$vmr_root" > /dev/null
+    pushd "$vmr_root" > /dev/null || return
 
     git checkout -- .
     git clean -dfx
@@ -205,7 +204,7 @@ prepare_vmr_stage2() {
     )
     ./prep-source-build.sh "${args[@]}"
 
-    popd > /dev/null
+    popd > /dev/null || return
     endgroup
 }
 
@@ -214,7 +213,7 @@ build_vmr_stage2() {
     local target_rid="$2"
 
     group "building $target_rid stage2"
-    pushd "$vmr_root" > /dev/null
+    pushd "$vmr_root" > /dev/null || return
 
     local args=(
         -so
@@ -231,7 +230,7 @@ build_vmr_stage2() {
     )
     # CI=true interferes with dotnet/aspire's build
     # see https://github.com/dotnet/dotnet/blob/v9.0.0-rc.1.24431.7/src/aspire/Directory.Build.targets#L18
-    CI= ./build.sh "${args[@]}"
+    CI='' ./build.sh "${args[@]}"
 
     mv artifacts/assets/Release/*.tar.* "$OUT_DIR"/
 
@@ -239,6 +238,6 @@ build_vmr_stage2() {
     mkdir -p "$feed_dir"
     mv artifacts/assets/Release/* "$feed_dir"/
 
-    popd > /dev/null
+    popd > /dev/null || return
     endgroup
 }

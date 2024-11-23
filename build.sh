@@ -4,6 +4,7 @@ set -e
 
 MY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# shellcheck source-path=SCRIPTDIR
 . "$MY_DIR"/scripts/_utils.sh
 . "$MY_DIR"/_functions.sh
 
@@ -11,6 +12,7 @@ MY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 : "${BUILD_CONFIG:=$MY_DIR/_config.sh}"
 
 echo "sourcing build config from $(_term green)${BUILD_CONFIG}$(_term reset)"
+# shellcheck source=_config.sh
 . "$BUILD_CONFIG"
 echo
 
@@ -95,7 +97,7 @@ main() {
         # stage2 wants to run crossgen2 but it's for $TARGET_ARCH instead of
         # $BUILD_ARCH
         export QEMU_LD_PREFIX="$ROOTFS_DIR"
-        prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
+        prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT"
         build_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$TARGET_GLIBC_RID"
         maybe_dump_ccache_stats
     fi
@@ -103,7 +105,7 @@ main() {
     if [[ -n $ROOTFS_MUSL_DIR ]]; then
         export ROOTFS_DIR="$ROOTFS_MUSL_DIR"
         export QEMU_LD_PREFIX="$ROOTFS_MUSL_DIR"
-        prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$_BUILT_VERSION"
+        prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT"
         build_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$TARGET_MUSL_RID"
         maybe_dump_ccache_stats
     fi

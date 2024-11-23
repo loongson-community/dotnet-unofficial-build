@@ -4,6 +4,7 @@ set -e
 
 MY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# shellcheck source-path=SCRIPTDIR
 . "$MY_DIR"/_utils.sh
 
 KIND="${1:?container kind must be specified on command-line}"

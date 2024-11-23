@@ -1,6 +1,10 @@
-export OUT_DIR="$(realpath ./test/out)"
-export ROOTFS_GLIBC_DIR="$(realpath ./test/rootfs)"
-export ROOTFS_MUSL_DIR="$(realpath ./test/rootfs-musl)"
+# shellcheck shell=bash  # direnv runtime is bash
+# shellcheck disable=SC2034  # the file is meant to be sourced so no exports needed
+
+OUT_DIR="$(realpath ./test/out)"
+ROOTFS_GLIBC_DIR="$(realpath ./test/rootfs)"
+ROOTFS_MUSL_DIR="$(realpath ./test/rootfs-musl)"
+export OUT_DIR ROOTFS_GLIBC_DIR ROOTFS_MUSL_DIR
 
 if [[ -d ../dotnet ]]; then
     DOTNET_VMR_CHECKOUT="$(realpath ../dotnet)"
