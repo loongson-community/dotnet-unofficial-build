@@ -120,7 +120,7 @@ setup_flags() {
     local dest_var
 
     group "setting up flags for stage$stage"
-    for dest_var in EXTRA_CFLAGS EXTRA_CXXFLAGS EXTRA_LDFLAGS; do
+    for dest_var in CFLAGS CXXFLAGS LDFLAGS; do
         cfg_var="STAGE${stage}_$dest_var"
         if [[ -n ${!cfg_var} ]]; then
             export "$dest_var"="${!cfg_var}"
