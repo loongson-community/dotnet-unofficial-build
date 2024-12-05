@@ -78,10 +78,13 @@ jobs:
       - name: Check the artifacts
         run: ls -alF tmp/release/build-out
 
+      - name: Render the release notes
+        run: ./scripts/render-release-notes.py "${{ github.repository }}" "${{ github.ref }}" tmp/release/build-out > tmp/release-notes.md
+
       - name: Make the release
         uses: softprops/action-gh-release@v2
         with:
-          body_path: release-notes.md
+          body_path: tmp/release-notes.md
           files: tmp/release/build-out/*
           generate_release_notes: false
           prerelease: false  # treat upstream preview releases as non-prerelease too
