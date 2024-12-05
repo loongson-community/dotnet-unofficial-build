@@ -87,6 +87,7 @@ main() {
 
     prepare_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
     maybe_dump_ccache_stats
+    setup_flags 1
     build_vmr_stage1 "$DOTNET_VMR_CHECKOUT"
     maybe_dump_ccache_stats
 
@@ -98,6 +99,7 @@ main() {
         # $BUILD_ARCH
         export QEMU_LD_PREFIX="$ROOTFS_DIR"
         prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT"
+        setup_flags 2
         build_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$TARGET_GLIBC_RID"
         maybe_dump_ccache_stats
     fi
@@ -106,6 +108,7 @@ main() {
         export ROOTFS_DIR="$ROOTFS_MUSL_DIR"
         export QEMU_LD_PREFIX="$ROOTFS_MUSL_DIR"
         prepare_vmr_stage2 "$DOTNET_VMR_CHECKOUT"
+        setup_flags 2
         build_vmr_stage2 "$DOTNET_VMR_CHECKOUT" "$TARGET_MUSL_RID"
         maybe_dump_ccache_stats
     fi

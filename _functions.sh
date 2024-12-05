@@ -114,6 +114,25 @@ prepare_vmr_stage1() {
     endgroup
 }
 
+setup_flags() {
+    local stage="$1"
+    local cfg_var
+    local dest_var
+
+    group "setting up flags for stage$stage"
+    for dest_var in EXTRA_CFLAGS EXTRA_CXXFLAGS EXTRA_LDFLAGS; do
+        cfg_var="STAGE${stage}_$dest_var"
+        if [[ -n ${!cfg_var} ]]; then
+            export "$dest_var"="${!cfg_var}"
+            echo "* exported $(_term yellow)${dest_var}=$(_term cyan)${!dest_var}$(_term reset)"
+        else
+            unset "$dest_var"
+            echo "* unset $(_term yellow)${dest_var}$(_term reset)"
+        fi
+    done
+    endgroup
+}
+
 _BUILT_VERSION=
 
 build_vmr_stage1() {
