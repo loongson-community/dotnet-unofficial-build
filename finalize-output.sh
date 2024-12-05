@@ -64,20 +64,18 @@ repack_tarballs() {
 gen_checksums() {
     group "checksumming tarballs"
 
-    local files=()
+    local f
     for f in *.tar *.tar.*; do
         if [[ $f == "*.tar" || $f == "*.tar.*" ]]; then
             # path expansion produced no result
             continue
         fi
 
-        echo "  - will checksum $f"
-        files+=( "$f" )
+        echo "  - $f"
+        sha256sum "$f" > "$f".sha256 &
+        sha512sum "$f" > "$f".sha512 &
+        wait
     done
-
-    sha256sum "${files[@]}" > SHA256SUMS &
-    sha512sum "${files[@]}" > SHA512SUMS &
-    wait
 
     endgroup
 }
