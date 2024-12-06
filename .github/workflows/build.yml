@@ -79,7 +79,7 @@ jobs:
         run: ls -alF tmp/release/build-out
 
       - name: Render the release notes
-        run: ./scripts/render-release-notes.py "${{ github.repository }}" "${{ github.ref }}" tmp/release/build-out > tmp/release-notes.md
+        run: ./scripts/render-release-notes.py "${{ github.repository }}" "${{ github.ref_name }}" tmp/release/build-out > tmp/release-notes.md
 
       - name: Make the release
         uses: softprops/action-gh-release@v2

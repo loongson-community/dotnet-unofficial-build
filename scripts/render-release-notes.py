@@ -9,14 +9,13 @@ from typing import Iterator, NamedTuple
 from urllib.parse import urljoin, quote
 
 
-TAG_REF_PREFIX = "refs/tags/"
 RE_PORTABLE_RID = re.compile(
     r"[-.]((?:android|ios|iossimulator|linux|linux-bionic|linux-musl|osx|win)-[0-9a-z]+)\.tar(?:\.gz|\.bz2|\.xz|\.zst)?$"
 )
 
 def usage(argv0: str) -> int:
     print(
-        f"usage: {argv0} <owner/repo> <{TAG_REF_PREFIX}/RELEASE-TAG-NAME> <path/to/out/dir>",
+        f"usage: {argv0} <owner/repo> <tag-name> <path/to/out/dir>",
         file=sys.stderr,
     )
     return 1
@@ -136,11 +135,9 @@ def main(argv: list[str]) -> int:
     if len(argv) != 4:
         return usage(argv[0])
 
-    if not argv[2].startswith(TAG_REF_PREFIX):
-        return usage(argv[0])
-
-    owner_repo = argv[1]  # let's just trust the input from CI
-    tag_name = argv[2][len(TAG_REF_PREFIX):]
+    # let's just trust the input from CI
+    owner_repo = argv[1]
+    tag_name = argv[2]
     outdir = pathlib.Path(argv[3])
 
     um = URLMaker(owner_repo, tag_name)
