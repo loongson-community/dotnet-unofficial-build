@@ -9,7 +9,7 @@ RUN <<EOF
 apt-get update
 apt-get install -y git debootstrap debian-ports-archive-keyring
 
-git clone https://github.com/loongson-community/dotnet-arcade.git /arcade
+git clone https://github.com/dotnet/dotnet-arcade.git /arcade
 cd /arcade && git checkout "$ARCADE_COMMIT"
 EOF
 
